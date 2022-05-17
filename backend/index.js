@@ -2,8 +2,12 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
+
+
+//routes
 const userRoute = require('./routes/user')
 const productRoute = require('./routes/product')
+const orderRoute = require('./routes/order')
 const authRoute = require('./routes/auth')
 
 dotenv.config();
@@ -33,6 +37,7 @@ app.use((req, res, next)=>{
 app.use('/api/auth', authRoute);
 app.use('/api/users', userRoute);
 app.use('/api/products', productRoute);
+app.use('/api/orders', orderRoute);
 
 app.listen(process.env.PORT || 3000, ()=> {
     console.log("Backend Server is running!")

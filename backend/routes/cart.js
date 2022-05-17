@@ -23,7 +23,7 @@ router.post('/', verifyToken, (req,res)=>{
 
 
 
-router.put('/:id', verifyToken, (req,res)=>{
+router.put('/:id', verifyTokenAndAuthorization, (req,res)=>{
     
 
     Cart.findByIdAndUpdate(req.params.id, {
@@ -39,7 +39,7 @@ router.put('/:id', verifyToken, (req,res)=>{
 
 // //DELETE Cart
 
-router.delete('/:id', verifyToken, (req,res)=>{
+router.delete('/:id', verifyTokenAndAuthorization, (req,res)=>{
     Cart.findByIdAndDelete(req.params.id)
         .then(deletedCart=>{
             res.status(200).json("User has been deleted...")
