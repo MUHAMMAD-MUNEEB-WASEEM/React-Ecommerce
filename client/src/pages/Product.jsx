@@ -1,9 +1,13 @@
 import { Add, Announcement, Remove } from '@material-ui/icons'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
+import { useLocation } from 'react-router-dom'
 import styled from 'styled-components'
 import Footer from '../components/Footer'
 import Navbar from '../components/Navbar'
 import Newsletter from '../components/Newsletter'
+import { addProduct } from '../redux/cartRedux'
+import { publicRequest } from '../requestMethods'
 import { mobile } from '../responsive'
 
 
@@ -138,6 +142,40 @@ const Button = styled.button`
 
 
 function Product() {
+    const location = useLocation();
+    const id = location.pathname.split("/")[2];
+    const [product, setProduct] = useState({});
+    const [quantity, setQuantity] = useState(1);
+    const [color, setColor] = useState("");
+    const [size, setSize] = useState("");
+
+    const dispatch = useDispatch()
+
+    useEffect(()=>{
+        publicRequest.get('/products/find/'+id)
+        .then(res=>{
+            setProduct(res.data)
+            console.log(res.data)
+        })
+        .catch(err=>{
+            console.log(err.response)
+        })
+
+    }, [id])
+
+    const handleQuantity = (type)=>{
+        if (type==="dec" ){
+            quantity>1 && setQuantity(quantity-1)
+        } else{
+            setQuantity(quantity+1)
+        }
+    }
+
+    const handleClick = ()=>{
+        dispatch(addProduct({product, quantity, price:product.price * quantity}));
+
+    }
+
   return (
     <Container>
         <Navbar/>
@@ -146,32 +184,30 @@ function Product() {
         <Wrapper>
             
             <ImageContainer>
-                <Image src="https://i.ibb.co/S6qMxwr/jean.jpg"/>
+                <Image src={product.img}/>
             </ImageContainer>
             
             <InfoContainer>
-                <Title>Denim Jumpsuit</Title>
-                <Desc>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. </Desc>
-                <Price>$ 20</Price>
+                <Title>{product.title}</Title>
+                <Desc>{product.desc}</Desc>
+                <Price>{product.price}</Price>
 
                 <FilterContainer>
                    
                     <Filter>
                         <FilterTitle>Color</FilterTitle>
-                        <FilterColor color="black"/>
-                        <FilterColor color="darkblue"/>
-                        <FilterColor color="gray"/>
+                        {product.color?.map((c)=>(
+                            <FilterColor key={c} color={c} onClick={()=>setColor(c)}/>
+                        ))}
                     </Filter>
 
                     <Filter>
                         <FilterTitle>Size</FilterTitle>
 
-                        <FilterSize>
-                            <FilterSizeOption>XS</FilterSizeOption>
-                            <FilterSizeOption>S</FilterSizeOption>
-                            <FilterSizeOption>M</FilterSizeOption>
-                            <FilterSizeOption>L</FilterSizeOption>
-                            <FilterSizeOption>XL</FilterSizeOption>
+                        <FilterSize onChange={(e)=>e.target.value}>
+                            {product.size?.map((s)=>(
+                            <FilterSizeOption key={s}>{s}</FilterSizeOption>
+                        ))}
                         </FilterSize>
                     </Filter>
                 
@@ -180,12 +216,12 @@ function Product() {
                 <AddContainer>
 
                     <AmountContainer>
-                        <Remove/>
-                        <Amount>1</Amount>
-                        <Add/>
+                        <Remove onClick={()=>handleQuantity("dec")}/>
+                        <Amount>{quantity}</Amount>
+                        <Add onClick={()=>handleQuantity("inc")}/>
                     </AmountContainer>
 
-                    <Button>ADD TO CART</Button>
+                    <Button onClick={handleClick}>ADD TO CART</Button>
 
                 </AddContainer>
             </InfoContainer>
