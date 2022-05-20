@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Announcement from '../components/Announcement'
 import Footer from '../components/Footer'
 import Navbar from '../components/Navbar'
@@ -6,6 +6,12 @@ import Navbar from '../components/Navbar'
 import styled from 'styled-components';
 import { Add, Remove } from '@material-ui/icons';
 import { mobile } from '../responsive';
+import { useSelector } from 'react-redux';
+
+import StripeCheckout from 'react-stripe-checkout'
+import { userRequest } from '../requestMethods';
+import { useNavigate } from 'react-router-dom';
+
 
 const Container = styled.div`
     
@@ -175,6 +181,40 @@ const Button = styled.button`
 
 
 function Cart() {
+
+    const history = useNavigate();
+
+    const KEY = "pk_test_51JhERSGkYc9g1BvdAdto0rO94IZQ6BAqLaShXV1pie6mHqnY0dTObrEPGgBsZRffjvKBvB2SBviBv1FIPQ1Mlpit00Yw4DxR4C";
+
+    const cart = useSelector(state=>state.cart);
+
+    console.log(cart.products)
+
+    const [stripeToken,setStripeToken] = useState(null);
+
+    const onToken = (token) => {
+        setStripeToken(token)
+    }    
+
+    useEffect(()=>{
+
+        stripeToken && (
+        userRequest.post("/checkout/payment", {
+            tokenId: stripeToken.id,
+            amount: cart.total ? (cart.total * 100) : 0,
+          })
+        .then(payment=>{
+            history('/success', {data: payment.data})
+            console.log(payment)
+        })
+        .catch(err=>{
+            console.log(err.response)
+        })
+
+        )
+    }, [stripeToken, cart.total, history])
+
+
   return (
     <Container>
         <Navbar/>
@@ -198,68 +238,53 @@ function Cart() {
                 
                 <Info>
 
-                <Product>
+
+            {cart.products.map((product)=>(
+                <Product key={product._id}>
                     
                     <ProductDetail>
-                        <Image src="https://cdn.shopify.com/s/files/1/0164/5304/2230/products/DSC_0156copy_9c89e251-9f09-4095-9cc5-1ce5dd015c33.jpg?v=1643020972"/>
+                        <Image src={product.img} />
 
                         <Details>
-                            
-                            <ProductName><b>Product:</b> JESSIE THUNDER SHOES</ProductName>
-                            <ProductId><b>ID:</b> 9872679920092</ProductId>
-                            <ProductColor color='black'/>
-                            <ProductSize><b>Size:</b> 37.5</ProductSize>
 
+                            <ProductName>
+                                 <b>Product:</b> {product.title}
+                            </ProductName>
+                            
+                            <ProductId>
+                                <b>ID:</b> {product._id}
+                            </ProductId>
+                            
+                            <ProductColor color={product.color} />
+                            
+                            <ProductSize>
+                                <b>Size:</b> {product.size}
+                            </ProductSize>
+                            
                         </Details>
-                    </ProductDetail>
-                    
+
+                </ProductDetail>
+                
                     <PriceDetail>
                         
                         <ProductAmountContainer>
                             <Add/>
-                            <ProductAmount>2</ProductAmount>
+                            <ProductAmount>{product.quantity}</ProductAmount>
                             <Remove/>
                         </ProductAmountContainer>
 
-                        <ProductPrice>$ 30</ProductPrice>
+                        <ProductPrice>$ {product.price * product.quantity}</ProductPrice>
 
 
                     </PriceDetail>
 
-                </Product>
+                 </Product>
+                 ))
+            
+            
+            }  
 
                 <Hr/>
-
-
-                <Product>
-                    
-                    <ProductDetail>
-                        <Image src="https://cdn.shopify.com/s/files/1/0164/5304/2230/products/DSC_0233copy_ec0c575d-24eb-4395-8e13-a09d77d72d53.jpg?v=1642876448"/>
-
-                        <Details>
-                            
-                            <ProductName><b>Product:</b> NIKE SHOES</ProductName>
-                            <ProductId><b>ID:</b> 9872679920092</ProductId>
-                            <ProductColor color='gray'/>
-                            <ProductSize><b>Size:</b> 40.5</ProductSize>
-
-                        </Details>
-                    </ProductDetail>
-                    
-                    <PriceDetail>
-                        
-                        <ProductAmountContainer>
-                            <Add/>
-                            <ProductAmount>2</ProductAmount>
-                            <Remove/>
-                        </ProductAmountContainer>
-
-                        <ProductPrice>$ 20</ProductPrice>
-
-
-                    </PriceDetail>
-
-                </Product>
 
                 </Info>
                 
@@ -269,7 +294,7 @@ function Cart() {
                     <SummaryItem>
 
                         <SummaryItemText>Subtotal</SummaryItemText>
-                        <SummaryItemPrice>$ 80</SummaryItemPrice>
+                        <SummaryItemPrice>$ {cart.total}</SummaryItemPrice>
 
                     </SummaryItem>
 
@@ -290,11 +315,22 @@ function Cart() {
                     <SummaryItem type="total">
 
                         <SummaryItemText>Total</SummaryItemText>
-                        <SummaryItemPrice>$ 80</SummaryItemPrice>
+                        <SummaryItemPrice>$ {cart.total}</SummaryItemPrice>
 
                     </SummaryItem>
 
-                    <Button>CHECKOUT NOW</Button>
+                    <StripeCheckout 
+                        name='MUNEEB SHOP' 
+                        image='https://avatars.githubusercontent.com/u/50763652?v=4'
+                        billingAddress
+                        shippingAddress
+                        description='Your total is $20'
+                        amount={cart.total*100}//stripe works with cents
+                        token={onToken}
+                        stripeKey={KEY}
+                        >
+                        <Button>CHECKOUT NOW</Button>
+                    </StripeCheckout>
 
                 </Summary>
             </Bottom>

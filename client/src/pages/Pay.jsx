@@ -48,7 +48,7 @@ function Pay() {
             billingAddress
             shippingAddress
             description='Your total is $20'
-            amount={2000}
+            amount={2000}//stripe works in cents
             token={onToken}
             stripeKey={KEY}
             >
